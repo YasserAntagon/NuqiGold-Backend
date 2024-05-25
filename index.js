@@ -8,6 +8,9 @@ const app = express()
 const userRoute = require('./src/routes/userRoute')
 const bankDetailsRoute = require('./src/routes/bankDetailsRoute')
 const notificationRoute = require('./src/routes/notificationRoute')
+const referralRoute = require('./src/routes/referralRoute')
+const transactionRoute = require('./src/routes/transactionRoute')
+const walletRoute = require('./src/routes/walletRoute')
 
 app.use(bodyParser.json());
 app.use(multer().any());
@@ -30,9 +33,12 @@ db.sync()
     })
 
 
-app.use('/users', userRoute)
+app.use('/user', userRoute)
 app.use('/user/:userId/bank', bankDetailsRoute)
 app.use('/user/:userId/notification', notificationRoute)
+app.use('/user/:userId/referral', referralRoute)
+app.use('/user/:userId/transaction', transactionRoute)
+app.use('/user/:userId/wallet', walletRoute)
 
 
 app.listen(process.env.PORT || 3000, () => {

@@ -17,12 +17,12 @@ router.post("/login/phone/otp/verify", smsOTP.verifyOTPBySMS)
 
 router.post("/login/password", user.userLoginWithEmailAndPassword)
 
-router.post("/register", user.createUser)
+router.post("/register", auth.userAuthentication, auth.userAuthorization, user.createUser)
 
-router.get("/all", user.getAllUsers)
-router.get("/:userId", user.getUserById)
+router.get("/:userId/users/all", auth.userAuthentication, auth.userAuthorization, user.getAllUsers)
+router.get("/:userId", auth.userAuthentication, auth.userAuthorization, user.getUserById)
 
-router.put("/:userId", user.updateUserById)
-router.delete("/:userId", user.deleteUser)
+router.put("/:userId", auth.userAuthentication, auth.userAuthorization, user.updateUserById)
+router.delete("/:userId", auth.userAuthentication, auth.userAuthorization, user.deleteUser)
 
 module.exports = router

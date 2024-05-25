@@ -1,5 +1,7 @@
 const userModel = require("../models/users")
 const validator = require("validator")
+const generateToken = require("../jwt/generateToken")
+const crypto = require("crypto")
 
 const userLoginWithEmail = async (req, res, next) => {
     try {
@@ -62,11 +64,16 @@ const userLoginWithEmailAndPassword = async (req, res, next) => {
         if (!password) {
             return res.status(400).send({ status: false, message: "Password is required" })
         }
-        let user = await userModel.findOne({ email: email, password: password })
+        let user = await userModel.findOne({ email: email })
         if (!user) {
             return res.status(400).send({ status: false, message: "Invalid email or password" })
         }
-        next()
+        const hashPassword = crypto.createHmac('sha256', process.env.HASH_SECRET_KEY).update(password).digest('hex');
+        if (user.password !== hashPassword) {
+            return res.status(400).send({ status: false, message: "Invalid email or password" })
+        }
+        const token = generateToken(user.id)
+        return res.status(200).send({ status: true, message: "Verified", token, user });
     }
     catch (err) {
         return res.status(500).send({ status: false, message: err.message })
@@ -75,7 +82,7 @@ const userLoginWithEmailAndPassword = async (req, res, next) => {
 
 const createUser = async (req, res) => {
     try {
-        let { email, phone_number, first_name, last_name, username, phone_prefix, profile_image, date_of_birth, address } = req.body
+        let { email, phone_number, password, first_name, last_name, username, phone_prefix, profile_image, date_of_birth, address } = req.body
         const data = {}
         if (email) {
             if (email && !validator.isEmail(email)) {
@@ -89,6 +96,13 @@ const createUser = async (req, res) => {
             }
             data.phone_prefix = phone_prefix
             data.phone_number = phone_number
+        }
+        if (password) {
+            if (!validator.isStrongPassword(password)) {
+                return res.status(400).send({ status: false, message: "Invalid Password" })
+            }
+            const hashPassword = crypto.createHmac('sha256', process.env.HASH_SECRET_KEY).update(password).digest('hex');
+            data.password = hashPassword
         }
         if (first_name) {
             data.first_name = first_name
@@ -162,7 +176,7 @@ const updateUserById = async (req, res) => {
         if (!user) {
             return res.status(400).send({ status: false, message: "User not found" })
         }
-        let { email, first_name, last_name, username, phone_prefix, phone_number, profile_image, date_of_birth, address } = req.body
+        let { email, first_name, last_name, username, phone_prefix, phone_number, profile_image, date_of_birth, address, password } = req.body
         const data = {}
         if (email) {
             if (email && !validator.isEmail(email)) {
@@ -176,6 +190,13 @@ const updateUserById = async (req, res) => {
             }
             data.phone_prefix = phone_prefix
             data.phone_number = phone_number
+        }
+        if (password) {
+            if (!validator.isStrongPassword(password)) {
+                return res.status(400).send({ status: false, message: "Please Provide Strong Password" })
+            }
+            const hashPassword = crypto.createHmac('sha256', process.env.HASH_SECRET_KEY).update(password).digest('hex');
+            data.password = hashPassword
         }
         if (first_name) {
             data.first_name = first_name
