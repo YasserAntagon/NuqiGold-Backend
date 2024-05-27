@@ -1,8 +1,9 @@
 const { Sequelize, DataTypes } = require("sequelize")
-
 const db = require("../utils/database")
 
-const notificationModel = db.define("Notification", {
+const UserModel = require("./users")
+
+const NotificationModel = db.define("Notification", {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -25,19 +26,19 @@ const notificationModel = db.define("Notification", {
         allowNull: true
     },
     user_id: {
-        type: DataTypes.STRING,
+        type: DataTypes.INTEGER,
         allowNull: true
     },
     is_deleted: {
         type: DataTypes.BOOLEAN,
-        allowNull: true
+        allowNull: true,
+        defaultValue: false
     }
 },
     {
-        tableName: "notification",
         timestamps: true,
         paranoid: true
     }
 )
 
-module.exports = notificationModel
+module.exports = NotificationModel

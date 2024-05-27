@@ -65,11 +65,8 @@ const createTransaction = async (req, res) => {
             transaction
         })
     }
-    catch (error) {
-        return res.status(500).send({
-            status: false,
-            error
-        })
+    catch (err) {
+        return res.status(500).send({ status: false, message: err.message })
     }
 }
 
@@ -88,53 +85,47 @@ const getTransactions = async (req, res) => {
             transaction
         })
     }
-    catch (error) {
-        return res.status(500).send({
-            status: false,
-            error
-        })
+    catch (err) {
+        return res.status(500).send({ status: false, message: err.message })
     }
 }
 
 const getTransactionById = async (req, res) => {
     try {
-        const { userId, transactionId } = req.params
+        const { userId, id } = req.params
         if (!userId) {
             return res.status(400).send({
                 status: false,
                 message: "user id is required"
             })
         }
-        if (!transactionId) {
+        if (!id) {
             return res.status(400).send({
                 status: false,
                 message: "transaction id is required"
             })
         }
-        const transaction = await TransactionModel.findOne({ where: { user_id: userId, id: transactionId } })
+        const transaction = await TransactionModel.findOne({ where: { user_id: userId, id: id } })
         return res.status(200).send({
             status: true,
             transaction
         })
     }
-    catch (error) {
-        return res.status(500).send({
-            status: false,
-            error
-        })
+    catch (err) {
+        return res.status(500).send({ status: false, message: err.message })
     }
 }
 
 const updateTransaction = async (req, res) => {
     try {
-        const { userId, transactionId } = req.params
+        const { userId, id } = req.params
         if (!userId) {
             return res.status(400).send({
                 status: false,
                 message: "user id is required"
             })
         }
-        if (!transactionId) {
+        if (!id) {
             return res.status(400).send({
                 status: false,
                 message: "transaction id is required"
@@ -172,46 +163,40 @@ const updateTransaction = async (req, res) => {
         if (sip) {
             data.sip = sip
         }
-        const transaction = await TransactionModel.update(data, { where: { user_id: userId, id: transactionId } })
+        const transaction = await TransactionModel.update(data, { where: { user_id: userId, id: id } })
         return res.status(200).send({
             status: true,
             transaction
         })
     }
-    catch (error) {
-        return res.status(500).send({
-            status: false,
-            error
-        })
+    catch (err) {
+        return res.status(500).send({ status: false, message: err.message })
     }
 }
 
 const deleteTransaction = async (req, res) => {
     try {
-        const { userId, transactionId } = req.params
+        const { userId, id } = req.params
         if (!userId) {
             return res.status(400).send({
                 status: false,
                 message: "user id is required"
             })
         }
-        if (!transactionId) {
+        if (!id) {
             return res.status(400).send({
                 status: false,
                 message: "transaction id is required"
             })
         }
-        const transaction = await TransactionModel.destroy({ where: { user_id: userId, id: transactionId } })
+        const transaction = await TransactionModel.destroy({ where: { user_id: userId, id: id } })
         return res.status(200).send({
             status: true,
             transaction
         })
     }
-    catch (error) {
-        return res.status(500).send({
-            status: false,
-            error
-        })
+    catch (err) {
+        return res.status(500).send({ status: false, message: err.message })
     }
 }
 

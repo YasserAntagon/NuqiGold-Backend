@@ -3,10 +3,10 @@ const router = express.Router()
 const notification = require("../controller/notification")
 const auth = require("../jwt/authentication")
 
-router.post('/',auth.userAuthentication, auth.userAuthorization, notification.createNotification)
-router.get('/all',auth.userAuthentication, auth.userAuthorization, notification.findAllNotification)
-router.get('/:id',auth.userAuthentication, auth.userAuthorization, notification.findNotificationById)
-router.put('/:id',auth.userAuthentication, auth.userAuthorization, notification.updateNotificationById)
-router.delete('/:id',auth.userAuthentication, auth.userAuthorization, notification.deleteNotificationById)
+router.post('/:userId/notification', auth.userAuthentication, auth.userAuthorization, notification.createNotification)
+router.get('/:userId/notification', auth.userAuthentication, auth.userAuthorization, notification.findAllNotification)
+router.get('/:userId/notification/:id', auth.userAuthentication, auth.userAuthorization, notification.findNotificationById)
+router.put('/:userId/notification/:id', auth.userAuthentication, auth.userAuthorization, notification.updateNotificationById)
+router.delete('/:userId/notification/:id', auth.userAuthentication, auth.userAuthorization, notification.deleteNotificationById)
 
 module.exports = router

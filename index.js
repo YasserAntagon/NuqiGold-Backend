@@ -34,11 +34,11 @@ db.sync()
 
 
 app.use('/user', userRoute)
-app.use('/user/:userId/bank', bankDetailsRoute)
-app.use('/user/:userId/notification', notificationRoute)
-app.use('/user/:userId/referral', referralRoute)
-app.use('/user/:userId/transaction', transactionRoute)
-app.use('/user/:userId/wallet', walletRoute)
+app.use('/user', bankDetailsRoute)
+app.use('/user', notificationRoute)
+app.use('/user', referralRoute)
+app.use('/user', transactionRoute)
+app.use('/user', walletRoute)
 
 
 app.listen(process.env.PORT || 3000, () => {

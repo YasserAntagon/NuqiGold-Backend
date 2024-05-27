@@ -1,8 +1,12 @@
 const { Sequelize, DataTypes } = require("sequelize")
-
 const db = require("../utils/database")
+const TransactionModel = require("./transaction")
+const WalletModel = require("./wallet")
+const BankDetailsModel = require("./bankDetails")
+const NotificationModel = require("./notification")
+const ReferralModel = require("./referral")
 
-const userModel = db.define("User", {
+const UserModel = db.define("Users", {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -73,39 +77,44 @@ const userModel = db.define("User", {
         allowNull: true,
         defaultValue: "user",
         validate: {
-            isIn: [['user', 'admin']]
+            isIn: [['user', 'admin', 'super_admin']]
         }
     },
     is_kyc_verified: {
         type: DataTypes.BOOLEAN,
-        allowNull: true
-    },
-    transaction_list: {
-        type: DataTypes.INTEGER,
-        allowNull: true
-    },
-    bank_details: {
-        type: DataTypes.JSON,
-        allowNull: true
-    },
-    wallet_id: {
-        type: DataTypes.INTEGER,
-        allowNull: true
+        allowNull: true,
+        defaultValue: false
     },
     is_profile_completed: {
         type: DataTypes.BOOLEAN,
-        allowNull: true
+        allowNull: true,
+        defaultValue: false
     },
     is_deleted: {
         type: DataTypes.BOOLEAN,
-        allowNull: true
+        allowNull: true,
+        defaultValue: false
     }
 },
     {
-        tableName: "users",
         timestamps: true,
         paranoid: true
     }
 )
 
-module.exports = userModel
+TransactionModel.belongsTo(UserModel, { foreignKey: "user_id", as: "transactions" })
+UserModel.hasMany(TransactionModel, { foreignKey: "user_id", as: "transactions" })
+
+WalletModel.belongsTo(UserModel, { foreignKey: "user_id", as: "wallet" })
+UserModel.hasOne(WalletModel, { foreignKey: "user_id", as: "wallet" })
+
+BankDetailsModel.belongsTo(UserModel, { foreignKey: "user_id", as: "bankDetails" })
+UserModel.hasOne(BankDetailsModel, { foreignKey: "user_id", as: "bankDetails" })
+
+NotificationModel.belongsTo(UserModel, { foreignKey: "user_id", as: "notifications" })
+UserModel.hasMany(NotificationModel, { foreignKey: "user_id", as: "notifications" })
+
+ReferralModel.belongsTo(UserModel, { foreignKey: "user_id", as: "referrals" })
+UserModel.hasMany(ReferralModel, { foreignKey: "user_id", as: "referrals" })
+
+module.exports = UserModel

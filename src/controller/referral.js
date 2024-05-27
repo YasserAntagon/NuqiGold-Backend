@@ -1,9 +1,10 @@
 const ReferralModel = require("../models/referral")
 
-const createRefferal = (req, res) => {
+const createRefferal = async (req, res) => {
     try {
-        const { user_id, type, referral_code, discount_percentage, discount_amount, status } = req.body
-        if (!user_id) {
+        const { userId } = req.params
+        const { type, referral_code, discount_percentage, discount_amount, status, expire_date } = req.body
+        if (!userId) {
             return res.status(400).send({
                 status: false,
                 message: "user_id is required"
@@ -21,13 +22,20 @@ const createRefferal = (req, res) => {
                 message: "referral_code is required"
             })
         }
+        if (!expire_date) {
+            return res.status(400).send({
+                status: false,
+                message: "expire_date is required"
+            })
+        }
         const data = {
-            user_id,
+            user_id: userId,
             type,
-            referral_code
+            referral_code,
+            expire_date
         }
         if (discount_amount) {
-            data.referral_code = referral_code
+            data.discount_amount = discount_amount
         }
         if (discount_percentage) {
             data.discount_percentage = discount_percentage
@@ -35,7 +43,7 @@ const createRefferal = (req, res) => {
         if (status) {
             data.status = status
         }
-        const referral = ReferralModel.create(data)
+        const referral = await ReferralModel.create(data)
         if (!referral) {
             return res.status(400).send({
                 status: false,
@@ -48,17 +56,21 @@ const createRefferal = (req, res) => {
             referral
         })
     }
-    catch (error) {
-        return res.status(500).send({
-            status: false,
-            error
-        })
+    catch (err) {
+        return res.status(500).send({ status: false, message: err.message })
     }
 }
 
-const getReferrals = (req, res) => {
+const getReferrals = async (req, res) => {
     try {
-        const referrals = ReferralModel.find()
+        const { userId } = req.params
+        if (!userId) {
+            return res.status(400).send({
+                status: false,
+                message: "user_id is required"
+            })
+        }
+        const referrals = await ReferralModel.findAll({ where: { user_id: userId } })
         if (!referrals) {
             return res.status(400).send({
                 status: false,
@@ -71,18 +83,15 @@ const getReferrals = (req, res) => {
             referrals
         })
     }
-    catch (error) {
-        return res.status(500).send({
-            status: false,
-            error
-        })
+    catch (err) {
+        return res.status(500).send({ status: false, message: err.message })
     }
 }
 
-const getReferralById = (req, res) => {
+const getReferralById = async (req, res) => {
     try {
-        const { id } = req.params
-        const referral = ReferralModel.findByPk(id)
+        const { id, userId } = req.params
+        const referral = await ReferralModel.findOne({ where: { id, user_id: userId } })
         if (!referral) {
             return res.status(400).send({
                 status: false,
@@ -95,18 +104,15 @@ const getReferralById = (req, res) => {
             referral
         })
     }
-    catch (error) {
-        return res.status(500).send({
-            status: false,
-            error
-        })
+    catch (err) {
+        return res.status(500).send({ status: false, message: err.message })
     }
 }
 
-const updateReferralById = (req, res) => {
+const updateReferralById = async (req, res) => {
     try {
-        const { id } = req.params
-        const { discount_percentage, discount_amount, status, is_suspended, suspended_till } = req.body
+        const { id, userId } = req.params
+        const { discount_percentage, discount_amount, status, is_suspended, suspended_till, expire_date } = req.body
         const data = {}
         if (discount_percentage) {
             data.discount_percentage = discount_percentage
@@ -120,10 +126,13 @@ const updateReferralById = (req, res) => {
         if (is_suspended) {
             data.is_suspended = is_suspended
         }
+        if (expire_date) {
+            data.expire_date = expire_date
+        }
         if (suspended_till) {
             data.suspended_till = suspended_till
         }
-        const referral = ReferralModel.update(data, { where: { id } })
+        const referral = await ReferralModel.update(data, { where: { id, user_id: userId } })
         if (!referral) {
             return res.status(400).send({
                 status: false,
@@ -136,19 +145,16 @@ const updateReferralById = (req, res) => {
             referral
         })
     }
-    catch (error) {
-        return res.status(500).send({
-            status: false,
-            error
-        })
+    catch (err) {
+        return res.status(500).send({ status: false, message: err.message })
     }
 }
 
 
-const deleteReferralById = (req, res) => {
+const deleteReferralById = async (req, res) => {
     try {
         const { id } = req.params
-        const referral = ReferralModel.destroy({ where: { id } })
+        const referral = await ReferralModel.destroy({ where: { id } })
         if (!referral) {
             return res.status(400).send({
                 status: false,
@@ -161,11 +167,8 @@ const deleteReferralById = (req, res) => {
             referral
         })
     }
-    catch (error) {
-        return res.status(500).send({
-            status: false,
-            error
-        })
+    catch (err) {
+        return res.status(500).send({ status: false, message: err.message })
     }
 }
 

@@ -1,8 +1,9 @@
 const { Sequelize, DataTypes } = require("sequelize")
-
 const db = require("../utils/database")
 
-const transactionModel = db.define("Transactiion", {
+const UserModel = require("./users")
+
+const TransactionModel = db.define("Transactiion", {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -13,11 +14,11 @@ const transactionModel = db.define("Transactiion", {
         allowNull: true
     },
     user_id: {
-        type: DataTypes.STRING,
+        type: DataTypes.INTEGER,
         allowNull: true
     },
     amount: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING,
         allowNull: true
     },
     type: {
@@ -37,42 +38,42 @@ const transactionModel = db.define("Transactiion", {
         allowNull: true
     },
     gold_weight: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING,
         allowNull: true
     },
     gold_price: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING,
         allowNull: true
     },
     sell_price: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING,
         allowNull: true
     },
     buy_price: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING,
         allowNull: true
     },
     sip_for: {
-        type: DataTypes.TEXT,
+        type: DataTypes.STRING,
         allowNull: true,
         validate: {
             isIn: [['day', 'week', 'month']]
         }
     },
     sip: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING,
         allowNull: true
     },
     is_deleted: {
         type: DataTypes.BOOLEAN,
-        allowNull: true
+        allowNull: true,
+        defaultValue: false
     }
 },
     {
-        tableName: "transaction",
         timestamps: true,
         paranoid: true
     }
 )
 
-module.exports = transactionModel
+module.exports = TransactionModel

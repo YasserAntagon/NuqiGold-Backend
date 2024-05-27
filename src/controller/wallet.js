@@ -2,21 +2,40 @@ const WalletModel = require("../models/wallet")
 
 const createWallet = async (req, res) => {
     try {
-        const { user_id, amount, status } = req.body
-        if (!user_id) {
-            return res.status(400).send({ status: false, error: "User id is required" })
-        }
-        if (!amount) {
-            return res.status(400).send({ status: false, error: "Amount is required" })
-        }
-        if (!status) {
-            return res.status(400).send({ status: false, error: "Status is required" })
-        }
-        const wallet = await WalletModel.create({ user_id, amount, status })
+        const { userId } = req.params;
+        const wallet = await WalletModel.findCreateFind({ where: { user_id: userId } })
         if (!wallet) {
             return res.status(400).send({ status: false, error: "Wallet creation failed" })
         }
         return res.status(201).send({ status: true, message: "Wallet created successfully", data: wallet })
+    }
+    catch (error) {
+        return res.status(500).send({ status: false, error: error.message })
+    }
+}
+
+
+const getAllWallet = async (req, res) => {
+    try {
+        const wallet = await WalletModel.findAll()
+        if (!wallet) {
+            return res.status(404).send({ status: false, error: "Wallets fetch failed" })
+        }
+        return res.status(200).send({ status: true, message: "Wallet fetched successfully", data: wallet })
+    }
+    catch (error) {
+        return res.status(500).send({ status: false, error: error.message })
+    }
+}
+
+const getWalletById = async (req, res) => {
+    try {
+        const { userId, id } = req.params
+        const wallet = await WalletModel.findOne({ user_id: userId, id })
+        if (!wallet) {
+            return res.status(404).send({ status: false, error: "Wallet Not found" })
+        }
+        return res.status(200).send({ status: true, message: "Wallet fetched successfully", data: wallet })
     }
     catch (error) {
         return res.status(500).send({ status: false, error: error.message })
@@ -48,32 +67,6 @@ const updateWalletById = async (req, res) => {
     }
 }
 
-const getAllWallet = async (req, res) => {
-    try {
-        const wallet = await WalletModel.findAll()
-        if (!wallet) {
-            return res.status(400).send({ status: false, error: "Wallet fetch failed" })
-        }
-        return res.status(200).send({ status: true, message: "Wallet fetched successfully", data: wallet })
-    }
-    catch (error) {
-        return res.status(500).send({ status: false, error: error.message })
-    }
-}
-
-const getWalletById = async (req, res) => {
-    try {
-        const { id } = req.params
-        const wallet = await WalletModel.findByPk(id)
-        if (!wallet) {
-            return res.status(400).send({ status: false, error: "Wallet fetch failed" })
-        }
-        return res.status(200).send({ status: true, message: "Wallet fetched successfully", data: wallet })
-    }
-    catch (error) {
-        return res.status(500).send({ status: false, error: error.message })
-    }
-}
 
 const deleteWallet = (req, res) => {
     try {

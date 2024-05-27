@@ -1,15 +1,16 @@
 const { Sequelize, DataTypes } = require("sequelize")
-
 const db = require("../utils/database")
 
-const userModel = db.define("notification", {
+const UserModel = require("./users")
+
+const BankDetail = db.define("BankDetails", {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true
     },
     user_id: {
-        type: DataTypes.STRING,
+        type: DataTypes.INTEGER,
         allowNull: true
     },
     holder_name: {
@@ -40,16 +41,20 @@ const userModel = db.define("notification", {
         type: DataTypes.STRING,
         allowNull: true
     },
+    login_with: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
     is_deleted: {
         type: DataTypes.BOOLEAN,
-        allowNull: true
+        allowNull: true,
+        defaultValue: false
     }
 },
     {
-        tableName: "notification",
         timestamps: true,
         paranoid: true
     }
 )
 
-module.exports = userModel
+module.exports = BankDetail

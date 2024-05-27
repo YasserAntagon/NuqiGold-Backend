@@ -120,7 +120,7 @@ const createUser = async (req, res) => {
             data.profile_image = profile_image
         }
         if (date_of_birth) {
-            if (!validator.isDate(date_of_birth)) {
+            if (!validator.isISO8601(date_of_birth)) {
                 return res.status(400).send({ status: false, message: "Invalid Date of Birth" })
             }
             data.date_of_birth = date_of_birth
@@ -158,7 +158,9 @@ const getAllUsers = async (req, res) => {
 const getUserById = async (req, res) => {
     try {
         let { userId } = req.params
-        let user = await userModel.findByPk(userId)
+        let user = await userModel.findByPk(userId, {
+            include: ["transactions", "wallet", "bankDetails", "notifications", "referrals"]
+        })
         if (!user) {
             return res.status(400).send({ status: false, message: "User not found" })
         }
@@ -176,7 +178,22 @@ const updateUserById = async (req, res) => {
         if (!user) {
             return res.status(400).send({ status: false, message: "User not found" })
         }
-        let { email, first_name, last_name, username, phone_prefix, phone_number, profile_image, date_of_birth, address, password } = req.body
+        let { email,
+            first_name,
+            last_name,
+            username,
+            phone_prefix,
+            phone_number,
+            profile_image,
+            date_of_birth,
+            address,
+            password,
+            user_national_id_type,
+            user_national_id,
+            alternate_phone_number,
+            alternate_address,
+            is_kyc_verified,
+            is_profile_completed } = req.body
         const data = {}
         if (email) {
             if (email && !validator.isEmail(email)) {
@@ -214,7 +231,7 @@ const updateUserById = async (req, res) => {
             data.profile_image = profile_image
         }
         if (date_of_birth) {
-            if (!validator.isDate(date_of_birth)) {
+            if (!validator.isISO8601(date_of_birth)) {
                 return res.status(400).send({ status: false, message: "Invalid Date of Birth" })
             }
             data.date_of_birth = date_of_birth
@@ -222,6 +239,25 @@ const updateUserById = async (req, res) => {
         if (address) {
             data.address = address
         }
+        if (user_national_id_type) {
+            data.user_national_id_type = user_national_id_type
+        }
+        if (user_national_id) {
+            data.user_national_id = user_national_id
+        }
+        if (alternate_phone_number) {
+            data.alternate_phone_number = alternate_phone_number
+        }
+        if (alternate_address) {
+            data.alternate_address = alternate_address
+        }
+        if (is_kyc_verified) {
+            data.is_kyc_verified = is_kyc_verified
+        }
+        if (is_profile_completed) {
+            data.is_profile_completed = is_profile_completed
+        }
+
         if (Object.keys(data).length === 0) {
             return res.status(400).send({ status: false, message: "Invalid data" })
         }

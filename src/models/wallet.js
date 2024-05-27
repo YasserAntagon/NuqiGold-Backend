@@ -1,8 +1,8 @@
-const { Sequelize, DataTypes } = require("sequelize")
-
+const { DataTypes } = require("sequelize")
 const db = require("../utils/database")
+const UserModel = require("./users")
 
-const walletModel = db.define("Wallet", {
+const WalletModel = db.define("Wallet", {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -13,11 +13,12 @@ const walletModel = db.define("Wallet", {
         allowNull: true
     },
     amount: {
-        type: DataTypes.INTEGER,
-        allowNull: true
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "0"
     },
     transaction_list: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING,
         allowNull: true
     },
     status: {
@@ -25,11 +26,13 @@ const walletModel = db.define("Wallet", {
         allowNull: true,
         validate: {
             isIn: [['active', 'inactive', 'suspended']]
-        }
+        },
+        defaultValue: "active"
     },
     is_suspended: {
         type: DataTypes.BOOLEAN,
-        allowNull: true
+        allowNull: true,
+        defaultValue: false
     },
     suspended_till: {
         type: DataTypes.DATE,
@@ -37,15 +40,14 @@ const walletModel = db.define("Wallet", {
     },
     is_deleted: {
         type: DataTypes.BOOLEAN,
-        allowNull: true
+        allowNull: true,
+        defaultValue: false
     }
 },
     {
-        tableName: "wallet",
         timestamps: true,
         paranoid: true
     }
 )
 
-
-module.exports = walletModel
+module.exports = WalletModel

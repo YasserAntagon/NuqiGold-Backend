@@ -1,15 +1,16 @@
 const { Sequelize, DataTypes } = require("sequelize")
-
 const db = require("../utils/database")
 
-const referralModel = db.define("referral", {
+const UserModel = require("./users")
+
+const ReferralModel = db.define("Referral", {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true
     },
     user_id: {
-        type: DataTypes.STRING,
+        type: DataTypes.INTEGER,
         allowNull: true
     },
     type: {
@@ -24,11 +25,11 @@ const referralModel = db.define("referral", {
         allowNull: true
     },
     discount_percentage: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING,
         allowNull: true
     },
     discount_amount: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING,
         allowNull: true
     },
     status: {
@@ -36,11 +37,22 @@ const referralModel = db.define("referral", {
         allowNull: true,
         validate: {
             isIn: [['active', 'inactive', 'suspended']]
-        }
+        },
+        defaultValue: 'active'
+    },
+    is_expired: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+        defaultValue: false
+    },
+    expire_date: {
+        type: DataTypes.DATE,
+        allowNull: true
     },
     is_suspended: {
         type: DataTypes.BOOLEAN,
-        allowNull: true
+        allowNull: true,
+        defaultValue: false
     },
     suspended_till: {
         type: DataTypes.DATE,
@@ -48,14 +60,14 @@ const referralModel = db.define("referral", {
     },
     is_deleted: {
         type: DataTypes.BOOLEAN,
-        allowNull: true
+        allowNull: true,
+        defaultValue: false
     }
 },
     {
-        tableName: "referral",
         timestamps: true,
         paranoid: true
     }
 )
 
-module.exports = referralModel
+module.exports = ReferralModel

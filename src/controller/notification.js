@@ -36,11 +36,8 @@ const createNotification = async (req, res) => {
             data: createdNotification
         })
     }
-    catch (error) {
-        return res.status(500).send({
-            status: false,
-            error
-        })
+    catch (err) {
+        return res.status(500).send({ status: false, message: err.message })
     }
 }
 
@@ -59,11 +56,8 @@ const findAllNotification = async (req, res) => {
             data: data
         })
     }
-    catch (error) {
-        return res.status(500).send({
-            status: false,
-            error
-        })
+    catch (err) {
+        return res.status(500).send({ status: false, message: err.message })
     }
 }
 
@@ -90,11 +84,8 @@ const findNotificationById = async (req, res) => {
         })
 
     }
-    catch (error) {
-        return res.status(500).send({
-            status: false,
-            error
-        })
+    catch (err) {
+        return res.status(500).send({ status: false, message: err.message })
     }
 }
 
@@ -137,11 +128,8 @@ const updateNotificationById = async (req, res) => {
             data: updatedNotification
         })
     }
-    catch (error) {
-        return res.status(500).send({
-            status: false,
-            error
-        })
+    catch (err) {
+        return res.status(500).send({ status: false, message: err.message })
     }
 }
 
@@ -166,11 +154,8 @@ const deleteNotificationById = async (req, res) => {
             message: "Notification Deleted Successfully",
         })
     }
-    catch (error) {
-        return res.status(500).send({
-            status: false,
-            error
-        })
+    catch (err) {
+        return res.status(500).send({ status: false, message: err.message })
     }
 }
 
