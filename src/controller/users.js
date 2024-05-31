@@ -2,6 +2,7 @@ const userModel = require("../models/users")
 const validator = require("validator")
 const generateToken = require("../jwt/generateToken")
 const crypto = require("crypto")
+const { Op } = require("sequelize")
 
 const userLoginWithEmail = async (req, res, next) => {
     try {
@@ -12,11 +13,10 @@ const userLoginWithEmail = async (req, res, next) => {
         if (!validator.isEmail(email)) {
             return res.status(400).send({ status: false, message: "Invalid Email" })
         }
-        let user = await userModel.findOne({ email: email })
+        let user = await userModel.findCreateFind({ where: { email: email } })
         if (!user) {
-            user = await userModel.create({ email: email })
             if (!user) {
-                return res.status(400).send({ status: false, message: "User not created" })
+                return res.status(404).send({ status: false, message: "User not found" })
             }
         }
         next()
@@ -38,12 +38,9 @@ const userLoginWithPhone = async (req, res, next) => {
         if (!validator.isMobilePhone(phone_number, 'en-IN')) {
             return res.status(400).send({ status: false, message: "Invalid Phone" })
         }
-        let user = await userModel.findOne({ phone_number: phone_number, phone_prefix: phone_prefix })
+        let user = await userModel.findCreateFind({ where: { phone_number: phone_number, phone_prefix: phone_prefix } })
         if (!user) {
-            user = await userModel.create({ phone_number: phone_number })
-            if (!user) {
-                return res.status(400).send({ status: false, message: "User not created", user })
-            }
+            return res.status(400).send({ status: false, message: "User not found", user })
         }
         next()
     }
@@ -54,19 +51,16 @@ const userLoginWithPhone = async (req, res, next) => {
 
 const userLoginWithEmailAndPassword = async (req, res, next) => {
     try {
-        let { email, password } = req.body
-        if (!email) {
-            return res.status(400).send({ status: false, message: "Email is required" })
-        }
-        if (!validator.isEmail(email)) {
-            return res.status(400).send({ status: false, message: "Invalid Email" })
+        let { username, password } = req.body
+        if (!username) {
+            return res.status(400).send({ status: false, message: "Email or Phone number is required" })
         }
         if (!password) {
             return res.status(400).send({ status: false, message: "Password is required" })
         }
-        let user = await userModel.findOne({ email: email })
+        let user = await userModel.findOne({ where: { [Op.or]: [{ email: username }, { phone_number: username }] } })
         if (!user) {
-            return res.status(400).send({ status: false, message: "Invalid email or password" })
+            return res.status(400).send({ status: false, message: "Invalid Credentials" })
         }
         const hashPassword = crypto.createHmac('sha256', process.env.HASH_SECRET_KEY).update(password).digest('hex');
         if (user.password !== hashPassword) {
@@ -82,7 +76,7 @@ const userLoginWithEmailAndPassword = async (req, res, next) => {
 
 const createUser = async (req, res) => {
     try {
-        let { email, phone_number, password, first_name, last_name, username, phone_prefix, profile_image, date_of_birth, address } = req.body
+        let { email, phone_number, password, first_name, last_name, username, phone_prefix, profile_image, date_of_birth, address, login_with } = req.body
         const data = {}
         if (email) {
             if (email && !validator.isEmail(email)) {
@@ -127,6 +121,9 @@ const createUser = async (req, res) => {
         }
         if (address) {
             data.address = address
+        }
+        if (login_with) {
+            data.login_with = login_with
         }
         if (Object.keys(data).length === 0) {
             return res.status(400).send({ status: false, message: "Invalid data" })
@@ -193,6 +190,7 @@ const updateUserById = async (req, res) => {
             alternate_phone_number,
             alternate_address,
             is_kyc_verified,
+            login_with,
             is_profile_completed } = req.body
         const data = {}
         if (email) {
@@ -254,6 +252,9 @@ const updateUserById = async (req, res) => {
         if (is_kyc_verified) {
             data.is_kyc_verified = is_kyc_verified
         }
+        if (login_with) {
+            data.login_with = login_with
+        }
         if (is_profile_completed) {
             data.is_profile_completed = is_profile_completed
         }
@@ -261,7 +262,8 @@ const updateUserById = async (req, res) => {
         if (Object.keys(data).length === 0) {
             return res.status(400).send({ status: false, message: "Invalid data" })
         }
-        user = await userModel.update(data, { where: { id: userId } })
+        user = await userModel.update(data, { where: { id: userId }, returning: true })
+        user = await userModel.findByPk(userId)
         return res.status(200).send({ status: true, message: "User updated", user })
     }
     catch (err) {

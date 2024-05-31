@@ -2,8 +2,9 @@ const crypto = require("crypto")
 const validator = require("validator")
 const userModel = require("../models/users")
 const generateToken = require("../jwt/generateToken")
+const { sendEmail } = require("../utils/emailer")
 
-const sendOtpToEmail = (req, res) => {
+const sendOtpToEmail = async (req, res) => {
     try {
         const { email } = req.body;
         if (!email) {
@@ -18,10 +19,11 @@ const sendOtpToEmail = (req, res) => {
         const data = `${email}.${otp}.${expires}`;
         const hash = crypto.createHmac('sha256', process.env.HASH_SECRET_KEY).update(data).digest('hex');
         const fullHash = `${hash}.${expires}`;
+        await sendEmail(email, "OTP for email verification", `Your OTP is ${otp}`);
         return res.status(200).send({ status: true, message: "OTP sent to your email.", email, hash: fullHash, otp });
     }
     catch (err) {
-        res.status(500).send({ status: false, error: err.message });
+        return res.status(500).send({ status: false, error: err.message });
     }
 }
 
@@ -45,7 +47,7 @@ const verifyEmailOtp = async (req, res) => {
         return res.status(400).send({ status: false, message: "Invalid OTP" });
     }
     catch (err) {
-        res.status(500).send({ status: false, error: err.message });
+        return res.status(500).send({ status: false, error: err.message });
     }
 }
 

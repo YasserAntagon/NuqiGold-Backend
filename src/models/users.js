@@ -80,6 +80,10 @@ const UserModel = db.define("Users", {
             isIn: [['user', 'admin', 'super_admin']]
         }
     },
+    login_with:{
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
     is_kyc_verified: {
         type: DataTypes.BOOLEAN,
         allowNull: true,

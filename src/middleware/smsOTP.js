@@ -18,10 +18,10 @@ const sendOtpBySMS = (req, res) => {
         const data = `${phone_number}.${otp}.${expires}`;
         const hash = crypto.createHmac('sha256', process.env.HASH_SECRET_KEY).update(data).digest('hex');
         const fullHash = `${hash}.${expires}`;
-        res.status(200).send({ status: true, message: "OTP sent to your phone_number number", phone_number, hash: fullHash, otp });
+        return res.status(200).send({ status: true, message: "OTP sent to your phone_number number", phone_number, hash: fullHash, otp });
     }
     catch (err) {
-        res.status(500).send({ status: false, message: err.message });
+        return res.status(500).send({ status: false, message: err.message });
     }
 }
 
@@ -45,7 +45,7 @@ const verifyOTPBySMS = async (req, res) => {
         return res.status(400).send({ status: false, message: "Invalid OTP" });
     }
     catch (err) {
-        res.status(500).send({ status: false, message: err.message });
+        return res.status(500).send({ status: false, message: err.message });
     }
 }
 
