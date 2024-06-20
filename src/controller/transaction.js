@@ -1,4 +1,8 @@
+const { Op } = require('sequelize')
+const sequelize = require("sequelize")
 const TransactionModel = require("../models/transaction")
+const UserModel = require("../models/users")
+const WalletModel = require("../models/wallet")
 
 const createTransaction = async (req, res) => {
     try {
@@ -9,13 +13,13 @@ const createTransaction = async (req, res) => {
                 message: "user id is required"
             })
         }
-        const { transaction_id, amount, type, status, description, gold_weight, gold_price, sell_price, buy_price, sip_for, sip } = req.body
-        if (!transaction_id) {
-            return res.status(400).send({
-                status: false,
-                message: "transaction id is required"
-            })
-        }
+        const { transaction_id, amount, updated_wallet_balance, user_invested_amount, vat, vat_percentage, type, status, description, gold_weight, updated_locker_balance, gold_price, sell_price, buy_price, sip_for, sip, transaction_type } = req.body
+        // if (!transaction_id) {
+        //     return res.status(400).send({
+        //         status: false,
+        //         message: "transaction id is required"
+        //     })
+        // }
         if (!amount) {
             return res.status(400).send({
                 status: false,
@@ -29,13 +33,22 @@ const createTransaction = async (req, res) => {
             })
         }
         const data = {
-            transaction_id,
+            // transaction_id,
             amount,
             type,
             user_id: userId
         }
+        if (transaction_type) {
+            data.transaction_type = transaction_type
+        }
         if (status) {
             data.status = status
+        }
+        if (vat) {
+            data.vat = vat
+        }
+        if (vat_percentage) {
+            data.vat_percentage = vat_percentage
         }
         if (description) {
             data.description = description
@@ -52,14 +65,36 @@ const createTransaction = async (req, res) => {
         if (buy_price) {
             data.buy_price = buy_price
         }
+        if (updated_locker_balance) {
+            data.updated_locker_balance = updated_locker_balance
+        }
+        if (updated_wallet_balance) {
+            data.updated_wallet_balance = updated_wallet_balance
+        }
+        if (user_invested_amount) {
+            data.user_invested_amount = user_invested_amount
+        }
         if (sip_for) {
             data.sip_for = sip_for
         }
         if (sip) {
             data.sip = sip
         }
-
         const transaction = await TransactionModel.create(data)
+        if (type === "buy" || type === "sip") {
+            await UserModel.update({
+                user_locker_balance: sequelize.literal(`user_locker_balance + ${gold_weight}`),
+                user_invested_amount: sequelize.literal(`user_invested_amount + ${amount}`)
+            }, { where: { id: userId } })
+            await WalletModel.update({ amount: sequelize.literal(`amount - ${amount}`) }, { where: { user_id: userId } })
+        }
+        if (type === "sell") {
+            await UserModel.update({
+                user_locker_balance: sequelize.literal(`user_locker_balance - ${gold_weight}`),
+                user_invested_amount: sequelize.literal(`user_invested_amount - ${amount}`)
+            }, { where: { id: userId } })
+            await WalletModel.update({ amount: sequelize.literal(`amount + ${amount}`) }, { where: { user_id: userId } })
+        }
         return res.status(201).send({
             status: true,
             transaction
@@ -73,13 +108,36 @@ const createTransaction = async (req, res) => {
 const getTransactions = async (req, res) => {
     try {
         const { userId } = req.params
+        const { transaction_type, from, to, page, pageSize, status } = req.query
         if (!userId) {
             return res.status(400).send({
                 status: false,
                 message: "user id is required"
             })
         }
-        const transaction = await TransactionModel.findAll({ where: { user_id: userId } })
+        let where = { user_id: userId }
+        if (from && to) {
+            where.createdAt = {
+                [Op.between]: [from, to]
+            }
+        }
+        if (from && !to) {
+            where.createdAt = {
+                [Op.gte]: from
+            }
+        }
+        if (!from && to) {
+            where.createdAt = {
+                [Op.lte]: to
+            }
+        }
+        if (status && (status == "success" || status == "failed" || status == "pending")) {
+            where.status = status
+        }
+        if (transaction_type) {
+            where.transaction_type = transaction_type
+        }
+        const transaction = await TransactionModel.findAll({ where, order: [["createdAt", "DESC"]], limit: pageSize ? Number(pageSize) : 10, offset: page ? (Number(page) - 1) * (pageSize ? Number(pageSize) : 10) : 0 })
         return res.status(200).send({
             status: true,
             transaction
@@ -116,6 +174,7 @@ const getTransactionById = async (req, res) => {
     }
 }
 
+
 const updateTransaction = async (req, res) => {
     try {
         const { userId, id } = req.params
@@ -131,13 +190,22 @@ const updateTransaction = async (req, res) => {
                 message: "transaction id is required"
             })
         }
-        const { amount, type, status, description, gold_weight, gold_price, sell_price, buy_price, sip_for, sip } = req.body
+        const { amount, type, status, description, transaction_type, gold_weight, gold_price, sell_price, buy_price, sip_for, sip, updated_wallet_balance, user_invested_amount } = req.body
         const data = {}
         if (amount) {
             data.amount = amount
         }
         if (type) {
             data.type = type
+        }
+        if (transaction_type) {
+            data.transaction_type = transaction_type
+        }
+        if (updated_wallet_balance) {
+            data.updated_wallet_balance = updated_wallet_balance
+        }
+        if (user_invested_amount) {
+            data.user_invested_amount = user_invested_amount
         }
         if (status) {
             data.status = status

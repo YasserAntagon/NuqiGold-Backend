@@ -1,9 +1,10 @@
+const voucher_codes = require("voucher-code-generator")
 const ReferralModel = require("../models/referral")
 
 const createRefferal = async (req, res) => {
     try {
         const { userId } = req.params
-        const { type, referral_code, discount_percentage, discount_amount, status, expire_date } = req.body
+        const { type, discount_percentage, discount_amount, status, expire_date } = req.body
         if (!userId) {
             return res.status(400).send({
                 status: false,
@@ -16,12 +17,6 @@ const createRefferal = async (req, res) => {
                 message: "type is required"
             })
         }
-        if (!referral_code) {
-            return res.status(400).send({
-                status: false,
-                message: "referral_code is required"
-            })
-        }
         if (!expire_date) {
             return res.status(400).send({
                 status: false,
@@ -31,7 +26,11 @@ const createRefferal = async (req, res) => {
         const data = {
             user_id: userId,
             type,
-            referral_code,
+            referral_code: voucher_codes.generate({
+                length: 8,
+                count: 1,
+                charset: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            })[0],
             expire_date
         }
         if (discount_amount) {

@@ -3,6 +3,11 @@ const validator = require("validator")
 const generateToken = require("../jwt/generateToken")
 const crypto = require("crypto")
 const { Op } = require("sequelize")
+const ReferralModel = require("../models/referral")
+const WalletModel = require("../models/wallet")
+const BankDetail = require("../models/bankDetails")
+const couponCodeGenerator = require("voucher-code-generator")
+
 
 const userLoginWithEmail = async (req, res, next) => {
     try {
@@ -15,9 +20,7 @@ const userLoginWithEmail = async (req, res, next) => {
         }
         let user = await userModel.findCreateFind({ where: { email: email } })
         if (!user) {
-            if (!user) {
-                return res.status(404).send({ status: false, message: "User not found" })
-            }
+            return res.status(404).send({ status: false, message: "User not found" })
         }
         next()
     }
@@ -82,11 +85,19 @@ const createUser = async (req, res) => {
             if (email && !validator.isEmail(email)) {
                 return res.status(400).send({ status: false, message: "Invalid Email" })
             }
+            const user = await userModel.findOne({ where: { email: email } })
+            if (user) {
+                return res.status(400).send({ status: false, message: "Email already exists" })
+            }
             data.email = email
         }
         if (phone_number && phone_prefix) {
             if (phone_number && !validator.isMobilePhone(phone_number, 'en-IN')) {
                 return res.status(400).send({ status: false, message: "Invalid Phone" })
+            }
+            const user = await userModel.findOne({ where: { phone_number: phone_number, phone_prefix: phone_prefix } })
+            if (user) {
+                return res.status(400).send({ status: false, message: "Phone already exists" })
             }
             data.phone_prefix = phone_prefix
             data.phone_number = phone_number
@@ -129,6 +140,13 @@ const createUser = async (req, res) => {
             return res.status(400).send({ status: false, message: "Invalid data" })
         }
         let user = await userModel.create(data)
+        const wallet = await WalletModel.create({ user_id: user.id })
+        user.wallet = wallet
+        const bankDetails = await BankDetail.create({ user_id: user.id })
+        user.bankDetails = bankDetails
+        let coupon = couponCodeGenerator.generate({ length: 10, count: 1, charset: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" })
+        let referrals = await ReferralModel.create({ type: "amount", discount_amount: "100", referral_code: coupon[0], user_id: user.id })
+        user.referrals = [referrals]
         if (!user) {
             return res.status(400).send({ status: false, message: "User not created" })
         }
@@ -156,8 +174,21 @@ const getUserById = async (req, res) => {
     try {
         let { userId } = req.params
         let user = await userModel.findByPk(userId, {
-            include: ["transactions", "wallet", "bankDetails", "notifications", "referrals"]
+            include: ["wallet", "bankDetails", "referrals"]
         })
+        if (user && user.referrals && user.referrals.length < 1) {
+            let coupon = couponCodeGenerator.generate({ length: 10, count: 1, charset: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" })
+            let referrals = await ReferralModel.create({ type: "amount", discount_amount: "100", referral_code: coupon[0], user_id: user.id })
+            user.referrals = [referrals]
+        }
+        if (user && !user.wallet) {
+            const wallet = await WalletModel.create({ user_id: user.id })
+            user.wallet = wallet
+        }
+        if (user && !user.bankDetails) {
+            const bankDetails = await BankDetail.create({ user_id: user.id })
+            user.bankDetails = bankDetails
+        }
         if (!user) {
             return res.status(400).send({ status: false, message: "User not found" })
         }
@@ -171,7 +202,9 @@ const getUserById = async (req, res) => {
 const updateUserById = async (req, res) => {
     try {
         let { userId } = req.params
-        let user = await userModel.findByPk(userId)
+        let user = await userModel.findByPk(userId, {
+            include: ["wallet", "bankDetails", "referrals"]
+        })
         if (!user) {
             return res.status(400).send({ status: false, message: "User not found" })
         }
@@ -197,11 +230,19 @@ const updateUserById = async (req, res) => {
             if (email && !validator.isEmail(email)) {
                 return res.status(400).send({ status: false, message: "Invalid Email" })
             }
+            const user = await userModel.findOne({ where: { email: email } })
+            if (user) {
+                return res.status(400).send({ status: false, message: "Email already in use" })
+            }
             data.email = email
         }
         if (phone_number && phone_prefix) {
             if (phone_number && !validator.isMobilePhone(phone_number, 'en-IN')) {
                 return res.status(400).send({ status: false, message: "Invalid Phone" })
+            }
+            const user = await userModel.findOne({ where: { phone_number: phone_number, phone_prefix: phone_prefix } })
+            if (user) {
+                return res.status(400).send({ status: false, message: "Phone already in use" })
             }
             data.phone_prefix = phone_prefix
             data.phone_number = phone_number
@@ -212,6 +253,19 @@ const updateUserById = async (req, res) => {
             }
             const hashPassword = crypto.createHmac('sha256', process.env.HASH_SECRET_KEY).update(password).digest('hex');
             data.password = hashPassword
+        }
+        if (user && user.referrals && user.referrals.length < 1) {
+            let coupon = couponCodeGenerator.generate({ length: 10, count: 1, charset: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" })
+            let referrals = await ReferralModel.create({ type: "amount", discount_amount: "100", referral_code: coupon[0], user_id: user.id })
+            user.referrals = [referrals]
+        }
+        if (user && !user.wallet) {
+            const wallet = await WalletModel.create({ user_id: user.id })
+            user.wallet = wallet
+        }
+        if (user && !user.bankDetails) {
+            const bankDetails = await BankDetail.create({ user_id: user.id })
+            user.bankDetails = bankDetails
         }
         if (first_name) {
             data.first_name = first_name
@@ -258,12 +312,13 @@ const updateUserById = async (req, res) => {
         if (is_profile_completed) {
             data.is_profile_completed = is_profile_completed
         }
-
         if (Object.keys(data).length === 0) {
             return res.status(400).send({ status: false, message: "Invalid data" })
         }
         user = await userModel.update(data, { where: { id: userId }, returning: true })
-        user = await userModel.findByPk(userId)
+        user = await userModel.findByPk(userId, {
+            include: ["wallet", "bankDetails", "referrals"]
+        })
         return res.status(200).send({ status: true, message: "User updated", user })
     }
     catch (err) {

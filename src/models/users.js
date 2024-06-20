@@ -49,8 +49,8 @@ const UserModel = db.define("Users", {
         unique: true
     },
     profile_image: {
-        type: DataTypes.TEXT,
-        allowNull: true
+        type: DataTypes.STRING,
+        allowNull: true,
     },
     alternate_phone_number: {
         type: DataTypes.STRING,
@@ -80,7 +80,7 @@ const UserModel = db.define("Users", {
             isIn: [['user', 'admin', 'super_admin']]
         }
     },
-    login_with:{
+    login_with: {
         type: DataTypes.STRING,
         allowNull: true,
     },
@@ -93,6 +93,16 @@ const UserModel = db.define("Users", {
         type: DataTypes.BOOLEAN,
         allowNull: true,
         defaultValue: false
+    },
+    user_locker_balance: {
+        type: DataTypes.FLOAT,
+        allowNull: true,
+        defaultValue: 0.0
+    },
+    user_invested_amount: {
+        type: DataTypes.FLOAT,
+        allowNull: true,
+        defaultValue: 0.0
     },
     is_deleted: {
         type: DataTypes.BOOLEAN,

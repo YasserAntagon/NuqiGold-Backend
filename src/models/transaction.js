@@ -25,6 +25,18 @@ const TransactionModel = db.define("Transactiion", {
         type: DataTypes.STRING,
         allowNull: true
     },
+    transaction_type: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    vat: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    vat_percentage: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
     status: {
         type: DataTypes.STRING,
         allowNull: true,
@@ -32,6 +44,14 @@ const TransactionModel = db.define("Transactiion", {
         validate: {
             isIn: [['success', 'failed', 'pending']]
         }
+    },
+    updated_locker_balance: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    updated_wallet_balance: {
+        type: DataTypes.STRING,
+        allowNull: true
     },
     description: {
         type: DataTypes.STRING,
@@ -57,7 +77,7 @@ const TransactionModel = db.define("Transactiion", {
         type: DataTypes.STRING,
         allowNull: true,
         validate: {
-            isIn: [['day', 'week', 'month']]
+            isIn: [['daily', 'weekly', 'monthly']]
         }
     },
     sip: {
