@@ -9,6 +9,7 @@ const BankDetail = require("../models/bankDetails")
 const couponCodeGenerator = require("voucher-code-generator")
 
 
+
 const userLoginWithEmail = async (req, res, next) => {
     try {
         let { email } = req.body

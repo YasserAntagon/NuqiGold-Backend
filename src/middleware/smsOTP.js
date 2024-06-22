@@ -2,8 +2,9 @@ const crypto = require("crypto")
 const validator = require("validator")
 const userModel = require("../models/users")
 const generateToken = require("../jwt/generateToken")
+const sendSMS = require("../utils/sms")
 
-const sendOtpBySMS = (req, res) => {
+const sendOtpBySMS = async (req, res) => {
     try {
         const { phone_number, phone_prefix } = req.body;
         if (!phone_number) {
@@ -18,6 +19,7 @@ const sendOtpBySMS = (req, res) => {
         const data = `${phone_number}.${otp}.${expires}`;
         const hash = crypto.createHmac('sha256', process.env.HASH_SECRET_KEY).update(data).digest('hex');
         const fullHash = `${hash}.${expires}`;
+        await sendSMS()
         return res.status(200).send({ status: true, message: "OTP sent to your phone_number number", phone_number, hash: fullHash, otp });
     }
     catch (err) {
