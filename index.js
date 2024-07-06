@@ -13,6 +13,7 @@ const referralRoute = require('./src/routes/referralRoute')
 const transactionRoute = require('./src/routes/transactionRoute')
 const walletRoute = require('./src/routes/walletRoute')
 const mediaRoute = require('./src/routes/mediaRoute')
+const other = require("./src/routes/other")
 
 app.use(express.json());
 // app.use(multer().any());
@@ -43,6 +44,7 @@ app.use('/user', referralRoute)
 app.use('/user', transactionRoute)
 app.use('/user', walletRoute)
 app.use('/user', mediaRoute)
+app.use("/other", other)
 
 app.listen(process.env.PORT || 3000, () => {
     console.log("Server is running on port http://localhost:" + process.env.PORT || 3000)

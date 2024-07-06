@@ -3,6 +3,7 @@ const sequelize = require("sequelize")
 const TransactionModel = require("../models/transaction")
 const UserModel = require("../models/users")
 const WalletModel = require("../models/wallet")
+const pdfGenerator = require("../other/pdfGenerator")
 
 const createTransaction = async (req, res) => {
     try {
@@ -83,17 +84,17 @@ const createTransaction = async (req, res) => {
         const transaction = await TransactionModel.create(data)
         if (type === "buy" || type === "sip") {
             await UserModel.update({
-                user_locker_balance: sequelize.literal(`user_locker_balance + ${gold_weight}`),
-                user_invested_amount: sequelize.literal(`user_invested_amount + ${amount}`)
+                user_locker_balance: sequelize.literal(`user_locker_balance + ${Number(gold_weight) ? Number(gold_weight).toFixed(4) : 0}`),
+                user_invested_amount: sequelize.literal(`user_invested_amount + ${Number(amount) ? Number(amount).toFixed(2) : 0}`)
             }, { where: { id: userId } })
-            await WalletModel.update({ amount: sequelize.literal(`amount - ${amount}`) }, { where: { user_id: userId } })
+            await WalletModel.update({ amount: sequelize.literal(`amount - ${Number(amount) ? Number(amount).toFixed(2) : 0}`) }, { where: { user_id: userId } })
         }
         if (type === "sell") {
             await UserModel.update({
-                user_locker_balance: sequelize.literal(`user_locker_balance - ${gold_weight}`),
-                user_invested_amount: sequelize.literal(`user_invested_amount - ${amount}`)
+                user_locker_balance: sequelize.literal(`user_locker_balance - ${Number(gold_weight) ? Number(gold_weight).toFixed(4) : 0}`),
+                user_invested_amount: sequelize.literal(`user_invested_amount - ${Number(amount) ? Number(amount).toFixed(2) : 0}`)
             }, { where: { id: userId } })
-            await WalletModel.update({ amount: sequelize.literal(`amount + ${amount}`) }, { where: { user_id: userId } })
+            await WalletModel.update({ amount: sequelize.literal(`amount + ${Number(amount) ? Number(amount).toFixed(2) : 0}`) }, { where: { user_id: userId } })
         }
         return res.status(201).send({
             status: true,
@@ -108,7 +109,7 @@ const createTransaction = async (req, res) => {
 const getTransactions = async (req, res) => {
     try {
         const { userId } = req.params
-        const { transaction_type, from, to, page, pageSize, status } = req.query
+        const { transaction_type, type, from, to, page, pageSize, status } = req.query
         if (!userId) {
             return res.status(400).send({
                 status: false,
@@ -133,6 +134,9 @@ const getTransactions = async (req, res) => {
         }
         if (status && (status == "success" || status == "failed" || status == "pending")) {
             where.status = status
+        }
+        if (type == "buy" || type == "sell") {
+            where.type = type
         }
         if (transaction_type) {
             where.transaction_type = transaction_type
@@ -174,6 +178,42 @@ const getTransactionById = async (req, res) => {
     }
 }
 
+const getTransactionInvoiceById = async (req, res) => {
+    try {
+        const { userId, id } = req.params
+        if (!userId) {
+            return res.status(400).send({
+                status: false,
+                message: "user id is required"
+            })
+        }
+        if (!id) {
+            return res.status(400).send({
+                status: false,
+                message: "transaction id is required"
+            })
+        }
+        const user = await UserModel.findOne({ where: { id: userId } })
+        if (!user) {
+            return res.status(404).send({
+                status: false,
+                message: "user not found"
+            })
+        }
+        const transaction = await TransactionModel.findOne({ where: { user_id: userId, id: id } })
+        if (!transaction) {
+            return res.status(404).send({
+                status: false,
+                message: "transaction not found"
+            })
+        }
+        const data = { ...transaction.dataValues, user: user.dataValues }
+        await pdfGenerator(data, res)
+    }
+    catch (err) {
+        return res.status(500).send({ status: false, message: err.message })
+    }
+}
 
 const updateTransaction = async (req, res) => {
     try {
@@ -268,4 +308,4 @@ const deleteTransaction = async (req, res) => {
     }
 }
 
-module.exports = { createTransaction, getTransactions, getTransactionById, updateTransaction, deleteTransaction }
+module.exports = { createTransaction, getTransactions, getTransactionById, updateTransaction, deleteTransaction, getTransactionInvoiceById }
